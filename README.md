@@ -1,73 +1,135 @@
-# Welcome to your Lovable project
+# Smart Portfolio Builder
 
-## Project info
+A web application that helps users build personalized stock portfolios based on investment strategies. Get real-time stock data, visualize weekly trends, and export portfolio reports.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 📊 **5 Investment Strategies**: Ethical, Growth, Index, Quality, and Value Investing
+- 📈 **Real-time Stock Data**: Live prices from Yahoo Finance
+- 📉 **Weekly Trend Charts**: Visualize stock performance over the past 5 trading days
+- 💰 **Portfolio Allocation**: Automatic allocation based on your investment amount
+- 📄 **PDF Export**: Download personalized portfolio reports
+- 📧 **Email Sharing**: Share investment insights via email
+- 🔗 **Yahoo Finance Links**: Click stock symbols to view detailed info
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Frontend
+- **Vite** - Fast build tool
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **shadcn/ui** - UI components
+- **Recharts** - Charts and visualizations
 
-Changes made via Lovable will be committed automatically to this repo.
+### Backend
+- **Flask** - Python web framework
+- **yfinance** - Yahoo Finance API wrapper
+- **Plotly** - Graph generation
+- **Flask-CORS** - Cross-origin support
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Quick Start
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Prerequisites
 
-Follow these steps:
+- **Node.js** (v18+) - [Install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Python** (v3.9+) - [Download Python](https://www.python.org/downloads/)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Setup Instructions
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+You need **2 terminals** to run this project - one for the backend and one for the frontend.
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Terminal 1: Backend (Flask API)
+
+```bash
+# Navigate to the backend directory
+cd backend
+
+# Create a virtual environment
+python -m venv .venv
+
+# Activate the virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+# .venv\Scripts\activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start the backend server
+python app.py
+```
+
+✅ Backend will be running at: **http://localhost:5001**
+
+---
+
+### Terminal 2: Frontend (React App)
+
+```bash
+# From the project root directory
+# Install Node.js dependencies
+npm install
+
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+✅ Frontend will be running at: **http://localhost:8080** (or the port shown in terminal)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📁 Project Structure
 
-## What technologies are used for this project?
+```
+StockPortfolio-285Project/
+├── backend/
+│   ├── app.py              # Flask API server
+│   ├── requirements.txt    # Python dependencies
+│   └── README.md           # Backend documentation
+├── src/
+│   ├── components/         # React components
+│   │   ├── InvestmentForm.tsx
+│   │   ├── PortfolioResults.tsx
+│   │   ├── StockCard.tsx
+│   │   └── ui/             # shadcn/ui components
+│   ├── lib/
+│   │   ├── portfolioData.ts    # API integration
+│   │   └── portfolioExport.ts  # PDF/Email export
+│   ├── pages/
+│   │   └── Index.tsx       # Main page
+│   └── App.tsx             # App entry point
+├── package.json            # Node.js dependencies
+└── README.md               # This file
+```
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🎯 Investment Strategies
 
-## How can I deploy this project?
+| Strategy | Stocks | Description |
+|----------|--------|-------------|
+| **Ethical Investing** | AAPL, ADBE, NSRGY | Companies with strong ESG practices |
+| **Growth Investing** | AMZN, TSLA, GOOGL | High-growth potential companies |
+| **Index Investing** | VTI, IXUS, ILTB | Diversified ETFs |
+| **Quality Investing** | MSFT, JNJ, PG | Blue-chip stable companies |
+| **Value Investing** | BRK-B, KO, XOM | Undervalued companies |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 📝 License
 
-Yes, you can!
+This project is for educational purposes (CMPE 285 Project).
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 👥 Contributors
+
+- Built with ❤️ for CMPE 285
