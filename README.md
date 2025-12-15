@@ -1,135 +1,67 @@
-# Smart Portfolio Builder
+# Stock Portfolio Builder
 
-A web application that helps users build personalized stock portfolios based on investment strategies. Get real-time stock data, visualize weekly trends, and export portfolio reports.
+Build personalized stock portfolios with real-time data and weekly trend analysis.
 
+## Prerequisites
 
-## Features
+-   **Node.js** (v18 or higher)
+-   **Python** (v3.9 or higher)
 
-- 📊 **5 Investment Strategies**: Ethical, Growth, Index, Quality, and Value Investing
-- 📈 **Real-time Stock Data**: Live prices from Yahoo Finance
-- 📉 **Weekly Trend Charts**: Visualize stock performance over the past 5 trading days
-- 💰 **Portfolio Allocation**: Automatic allocation based on your investment amount
-- 📄 **PDF Export**: Download personalized portfolio reports
-- 📧 **Email Sharing**: Share investment insights via email
-- 🔗 **Yahoo Finance Links**: Click stock symbols to view detailed info
+## How to Run
 
-## Tech Stack
+You need **2 terminals** - one for backend, one for frontend.
 
-### Frontend
-- **Vite** - Fast build tool
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **shadcn/ui** - UI components
-- **Recharts** - Charts and visualizations
-
-### Backend
-- **Flask** - Python web framework
-- **yfinance** - Yahoo Finance API wrapper
-- **Plotly** - Graph generation
-- **Flask-CORS** - Cross-origin support
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Node.js** (v18+) - [Install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-- **Python** (v3.9+) - [Download Python](https://www.python.org/downloads/)
-
-### Setup Instructions
-
-You need **2 terminals** to run this project - one for the backend and one for the frontend.
-
----
-
-### Terminal 1: Backend (Flask API)
+### Terminal 1: Start Backend
 
 ```bash
-# Navigate to the backend directory
 cd backend
 
-# Create a virtual environment
-python -m venv .venv
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Activate the virtual environment
-# On macOS/Linux:
-source .venv/bin/activate
-# On Windows:
-# .venv\Scripts\activate
-
-# Install Python dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# Start the backend server
+# Start server
 python app.py
 ```
 
-✅ Backend will be running at: **http://localhost:5001**
+Backend runs at: `http://localhost:5001`
 
----
-
-### Terminal 2: Frontend (React App)
+### Terminal 2: Start Frontend
 
 ```bash
-# From the project root directory
-# Install Node.js dependencies
+# From project root
 npm install
-
-# Start the development server
 npm run dev
 ```
 
-✅ Frontend will be running at: **http://localhost:8080** (or the port shown in terminal)
+Frontend runs at: `http://localhost:8080`
 
+## Features
 
----
+-   5 investment strategies (Ethical, Growth, Index, Quality, Value)
+-   Real-time stock prices from Yahoo Finance
+-   Weekly trend charts (5-day history)
+-   Automatic portfolio allocation
+-   PDF export and email sharing
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 StockPortfolio-285Project/
 ├── backend/
-│   ├── app.py              # Flask API server
-│   ├── requirements.txt    # Python dependencies
-│   └── README.md           # Backend documentation
-├── src/
-│   ├── components/         # React components
-│   │   ├── InvestmentForm.tsx
-│   │   ├── PortfolioResults.tsx
-│   │   ├── StockCard.tsx
-│   │   └── ui/             # shadcn/ui components
-│   ├── lib/
-│   │   ├── portfolioData.ts    # API integration
-│   │   └── portfolioExport.ts  # PDF/Email export
-│   ├── pages/
-│   │   └── Index.tsx       # Main page
-│   └── App.tsx             # App entry point
-├── package.json            # Node.js dependencies
-└── README.md               # This file
+│   ├── app.py           # Flask API
+│   └── requirements.txt
+├── frontend/
+│   └── src/
+│       ├── components/  # React components
+│       └── lib/         # API integration
+└── package.json
 ```
 
----
+## Tech Stack
 
-## 🎯 Investment Strategies
-
-| Strategy | Stocks | Description |
-|----------|--------|-------------|
-| **Ethical Investing** | AAPL, ADBE, NSRGY | Companies with strong ESG practices |
-| **Growth Investing** | AMZN, TSLA, GOOGL | High-growth potential companies |
-| **Index Investing** | VTI, IXUS, ILTB | Diversified ETFs |
-| **Quality Investing** | MSFT, JNJ, PG | Blue-chip stable companies |
-| **Value Investing** | BRK-B, KO, XOM | Undervalued companies |
-
----
-
-## 📝 License
-
-This project is for educational purposes (CMPE 285 Project).
-
----
-
-## 👥 Contributors
-
-- Built with ❤️ for CMPE 285
+**Frontend**: React, TypeScript, Tailwind CSS, Recharts  
+**Backend**: Flask, yfinance, Plotly
