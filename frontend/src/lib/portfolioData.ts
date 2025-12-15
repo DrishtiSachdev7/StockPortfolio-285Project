@@ -498,17 +498,15 @@ function transformBackendPortfolio(
 							? allocationAmount / price
 							: 0) * 100
 					) / 100;
-				const value =
-					Math.round(
-						(price > 0 ? shares * price : allocationAmount) * 100
-					) / 100;
+				// Use allocation amount as value to ensure totals match investment
+				const value = allocationAmount;
 
 				return {
 					symbol,
 					name: getStockName(symbol),
 					price,
 					shares,
-					allocation: Math.round((value / amount) * 100),
+					allocation: Math.round((allocationAmount / amount) * 100),
 					value,
 					change: 0,
 					weeklyTrend: buildStockTrend(stock, price),
@@ -526,18 +524,10 @@ function transformBackendPortfolio(
 			  }))
 			: combinePortfolioTrend(stocks);
 
-	// Prefer recomputing from allocations to avoid under-reporting when a price is missing
-	const fallbackTotal =
-		Math.round(
-			stocks.reduce((sum, stock) => sum + (stock.value ?? 0), 0) * 100
-		) / 100;
+	// Total value should equal the sum of all stock allocations (= investment amount)
 	const totalValue =
 		Math.round(
-			(data.overall_total_value && data.overall_total_value > 0
-				? data.overall_total_value
-				: weeklyTrend.length
-				? weeklyTrend[weeklyTrend.length - 1].value
-				: fallbackTotal) * 100
+			stocks.reduce((sum, stock) => sum + (stock.value ?? 0), 0) * 100
 		) / 100;
 
 	const totalChange =
