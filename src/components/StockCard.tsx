@@ -1,4 +1,6 @@
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { ExternalLink } from "lucide-react";
 
 interface StockCardProps {
   symbol: string;
@@ -28,7 +30,24 @@ const StockCard = ({
     <div className="glass-card overflow-hidden fade-in-up">
       {/* Header */}
       <div className="p-6 text-center border-b border-border/30">
-        <h3 className="text-2xl font-bold text-primary mb-4">{symbol}</h3>
+        <TooltipProvider>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <a
+                href={`https://finance.yahoo.com/quote/${symbol}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-2xl font-bold text-primary hover:text-primary/80 transition-colors mb-4 group"
+              >
+                {symbol}
+                <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View {symbol} on Yahoo Finance</p>
+            </TooltipContent>
+          </UITooltip>
+        </TooltipProvider>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Current Price</p>
