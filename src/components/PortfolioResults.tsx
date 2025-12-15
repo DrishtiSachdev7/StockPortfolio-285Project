@@ -1,6 +1,16 @@
-import { TrendingUp, TrendingDown, PieChart, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, PieChart, Wallet, Download, Mail, Copy, Share2 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { useState } from "react";
 import StockCard from "./StockCard";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { generatePortfolioPDF, shareViaEmail, copyToClipboard } from "@/lib/portfolioExport";
+import { useToast } from "@/hooks/use-toast";
 
 interface Stock {
   symbol: string;
@@ -31,10 +41,65 @@ const PortfolioResults = ({
   totalValue,
   totalChange,
 }: PortfolioResultsProps) => {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+
   const stocksWithTrends = stocks.map((stock) => ({
     ...stock,
     weeklyTrend: stock.weeklyTrend?.length ? stock.weeklyTrend : generateStockTrend(stock.price),
   }));
+
+  const portfolioData = {
+    amount,
+    strategies,
+    stocks: stocksWithTrends,
+    totalValue,
+    totalChange,
+    weeklyTrend,
+  };
+
+  const handleDownloadPDF = () => {
+    setIsExporting(true);
+    try {
+      generatePortfolioPDF(portfolioData);
+      toast({
+        title: "PDF Downloaded!",
+        description: "Your portfolio report has been saved.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "There was an error generating the PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleShareEmail = () => {
+    shareViaEmail(portfolioData);
+    toast({
+      title: "Email Client Opened",
+      description: "Your portfolio summary is ready to send.",
+    });
+  };
+
+  const handleCopyToClipboard = async () => {
+    const success = await copyToClipboard(portfolioData);
+    if (success) {
+      toast({
+        title: "Copied to Clipboard!",
+        description: "Portfolio summary copied. Paste it anywhere.",
+      });
+    } else {
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const stocksPerStrategy =
     strategies.length > 0 ? Math.ceil(stocksWithTrends.length / strategies.length) : 0;
@@ -61,6 +126,37 @@ const PortfolioResults = ({
             Total Portfolio Value: ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </span>
         </div>
+      </div>
+
+      {/* Export Actions */}
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button
+          onClick={handleDownloadPDF}
+          disabled={isExporting}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+        >
+          <Download className="w-4 h-4" />
+          {isExporting ? "Generating..." : "Download PDF Report"}
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Share2 className="w-4 h-4" />
+              Share Portfolio
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center">
+            <DropdownMenuItem onClick={handleShareEmail} className="gap-2 cursor-pointer">
+              <Mail className="w-4 h-4" />
+              Share via Email
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCopyToClipboard} className="gap-2 cursor-pointer">
+              <Copy className="w-4 h-4" />
+              Copy to Clipboard
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Strategy Sections */}
