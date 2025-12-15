@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { BarChart2 } from "lucide-react";
 
 const MarketOverview = () => {
-  const [dateRange, setDateRange] = useState<"1D" | "1W" | "1M" | "3M" | "6M" | "12M" | "60M">("12M");
+  const [dateRange, setDateRange] = useState<
+    "1D" | "1W" | "1M" | "3M" | "6M" | "12M" | "60M"
+  >("12M");
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -14,8 +16,10 @@ const MarketOverview = () => {
 
     const script = document.createElement("script");
     script.type = "text/javascript";
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js";
+    script.src =
+      "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js";
     script.async = true;
+
     script.innerHTML = JSON.stringify({
       colorTheme: "dark",
       dateRange,
@@ -29,25 +33,22 @@ const MarketOverview = () => {
         {
           title: "Indices",
           symbols: [
-            // Use common TradingView symbols with reliable data
             { s: "FOREXCOM:SPXUSD", d: "S&P 500" },
-            { s: "NASDAQ:NDX", d: "NASDAQ 100" },
-            { s: "DJI", d: "Dow 30" },
-            { s: "TVC:DEU40", d: "DAX" },
-            { s: "TVC:UKX", d: "FTSE 100" },
-            { s: "TVC:NI225", d: "Nikkei 225" },
+            { s: "FOREXCOM:NSXUSD", d: "NASDAQ 100" },
+            { s: "FOREXCOM:DJI", d: "Dow 30" },
+            { s: "INDEX:DEU40", d: "DAX" },
+            { s: "FOREXCOM:UKXGBP", d: "FTSE 100" },
+            { s: "INDEX:NKY", d: "Nikkei 225" },
           ],
         },
         {
           title: "Commodities",
           symbols: [
             { s: "TVC:GOLD", d: "Gold" },
-            { s: "TVC:USOIL", d: "Crude Oil" },
-            { s: "TVC:NATGAS", d: "Natural Gas" },
-            { s: "TVC:DXY", d: "US Dollar Index" },
             { s: "TVC:SILVER", d: "Silver" },
-            { s: "CBOT:ZC1!", d: "Corn" },
-            { s: "CBOT:ZW1!", d: "Wheat" },
+            { s: "TVC:USOIL", d: "Crude Oil" },
+            // More robust symbols for gas & dollar index:
+            { s: "INDEX:DXY", d: "US Dollar Index" }
           ],
         },
         {
@@ -96,9 +97,19 @@ const MarketOverview = () => {
         ))}
       </div>
 
-      <div className="tv-widget-wrapper rounded-xl overflow-hidden border border-border/60 bg-secondary/20" style={{ minHeight: 460 }}>
-        <div className="tradingview-widget-container" ref={containerRef} style={{ height: "440px" }}>
-          <div className="tradingview-widget-container__widget" style={{ height: "440px" }} />
+      <div
+        className="tv-widget-wrapper rounded-xl overflow-hidden border border-border/60 bg-secondary/20"
+        style={{ minHeight: 460 }}
+      >
+        <div
+          className="tradingview-widget-container"
+          ref={containerRef}
+          style={{ height: "440px" }}
+        >
+          <div
+            className="tradingview-widget-container__widget"
+            style={{ height: "440px" }}
+          />
           <div className="tradingview-widget-copyright text-xs text-muted-foreground text-center py-2">
             <a
               href="https://www.tradingview.com/markets/"
