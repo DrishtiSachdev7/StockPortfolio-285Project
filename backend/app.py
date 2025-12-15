@@ -40,41 +40,65 @@ def fetch_stock_prices(stocks):
 
 
 def fetch_weekly_trends_with_dates(stocks):
-    """Fetch weekly trend data (5 trading days) for each stock."""
+    """Fetch weekly trend data (5 trading days) for each stock with unified date range."""
     trends = {}
+    all_dates_set = set()
+    stock_data = {}
+    
+    # First pass: collect all data and find common date range
     for stock in stocks:
         ticker = yf.Ticker(stock)
         history = ticker.history(period="5d")
-
+        
         if not history.empty:
             dates = history.index.strftime("%Y-%m-%d").tolist()
             prices = list(history["Close"].values)
-
-            # Pad to 5 days if data is short - use first available price for missing days
-            first_price = prices[0] if prices else None
-            while len(dates) < 5:
-                missing_date = (
-                    datetime.strptime(dates[0], "%Y-%m-%d") - timedelta(days=1)
-                ).strftime("%Y-%m-%d")
-                dates.insert(0, missing_date)
-                # Use the first available price instead of None
-                prices.insert(0, first_price)
-
-            # Fill any None values in the middle with previous available price
-            for i in range(1, len(prices)):
-                if prices[i] is None and i > 0:
-                    prices[i] = prices[i-1]
-
-            trends[stock] = {"dates": dates[-5:], "prices": prices[-5:]}
+            stock_data[stock] = {"dates": dates, "prices": prices}
+            all_dates_set.update(dates)
         else:
-            today = datetime.today()
-            trends[stock] = {
-                "dates": [
-                    (today - timedelta(days=i)).strftime("%Y-%m-%d")
-                    for i in reversed(range(5))
-                ],
-                "prices": [None] * 5,
-            }
+            stock_data[stock] = {"dates": [], "prices": []}
+    
+    # Determine unified date range (last 5 trading days available across all stocks)
+    if all_dates_set:
+        unified_dates = sorted(all_dates_set)[-5:]
+    else:
+        # Fallback to last 5 calendar days
+        today = datetime.today()
+        unified_dates = [
+            (today - timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in reversed(range(5))
+        ]
+    
+    # Second pass: align all stocks to unified date range
+    for stock in stocks:
+        data = stock_data.get(stock, {"dates": [], "prices": []})
+        dates = data["dates"]
+        prices = data["prices"]
+        
+        # Create a price map for available dates
+        price_map = {dates[i]: prices[i] for i in range(len(dates)) if i < len(prices)}
+        
+        # Build aligned prices for unified dates
+        aligned_prices = []
+        for date in unified_dates:
+            if date in price_map and price_map[date] is not None:
+                aligned_prices.append(price_map[date])
+            else:
+                aligned_prices.append(None)
+        
+        # Fill missing values: first try next day (back-fill), then previous day (forward-fill)
+        # Back-fill pass: use next available value
+        for i in range(len(aligned_prices) - 2, -1, -1):
+            if aligned_prices[i] is None and i < len(aligned_prices) - 1 and aligned_prices[i + 1] is not None:
+                aligned_prices[i] = aligned_prices[i + 1]
+        
+        # Forward-fill pass: use previous available value for any remaining None
+        for i in range(1, len(aligned_prices)):
+            if aligned_prices[i] is None and aligned_prices[i - 1] is not None:
+                aligned_prices[i] = aligned_prices[i - 1]
+        
+        trends[stock] = {"dates": unified_dates, "prices": aligned_prices}
+    
     return trends
 
 
@@ -185,51 +209,47 @@ def calculate_portfolio_value(investment, stock_allocations, stock_prices):
 
 def build_weekly_portfolio_trend(results):
     """Aggregate weekly trend across all stocks in all strategies."""
-    # Collect all unique dates across all stocks
-    all_dates = set()
-    for result in results:
-        for stock_data in result["portfolio"].values():
-            dates = stock_data.get("dates") or []
-            all_dates.update(dates)
+    # All stocks now have the same unified date range
+    # Get dates from the first stock in the first result
+    unified_dates = []
+    if results and results[0]["portfolio"]:
+        first_stock = next(iter(results[0]["portfolio"].values()))
+        unified_dates = first_stock.get("dates", [])
     
-    # Sort dates chronologically
-    sorted_dates = sorted(all_dates)[-5:]  # Get last 5 days
+    if not unified_dates:
+        return []
     
     # Initialize daily values for each date
-    daily_values = {date: {"day": date, "value": 0.0} for date in sorted_dates}
+    daily_values = [{"day": date, "value": 0.0} for date in unified_dates]
     
+    # Aggregate portfolio value for each date
     for result in results:
         for stock_data in result["portfolio"].values():
             dates = stock_data.get("dates") or []
             prices = stock_data.get("prices") or []
             shares = stock_data.get("shares", 0) or 0
-
+            
+            # Since all stocks have unified dates, dates should match unified_dates
             for idx, date in enumerate(dates):
-                if date not in daily_values:
-                    continue
+                if idx >= len(daily_values):
+                    break
+                    
                 price = prices[idx] if idx < len(prices) else None
-                if price is None:
-                    continue
-                daily_values[date]["value"] += shares * price
+                if price is not None and price > 0:
+                    daily_values[idx]["value"] += shares * price
     
-    # Convert to list and round values
-    result_list = [daily_values[date] for date in sorted_dates]
-    
-    # Forward-fill any missing values (0.0) with previous day's value
-    for i in range(len(result_list)):
-        if result_list[i]["value"] == 0.0 and i > 0:
-            result_list[i]["value"] = result_list[i-1]["value"]
-        else:
-            result_list[i]["value"] = round(result_list[i]["value"], 2)
+    # Round values and format dates
+    for i in range(len(daily_values)):
+        daily_values[i]["value"] = round(daily_values[i]["value"], 2)
         
         # Format date for display (e.g., "Dec 9")
         try:
-            dt = datetime.strptime(result_list[i]["day"], "%Y-%m-%d")
-            result_list[i]["day"] = dt.strftime("%b %d")
+            dt = datetime.strptime(daily_values[i]["day"], "%Y-%m-%d")
+            daily_values[i]["day"] = dt.strftime("%b %d")
         except (ValueError, TypeError):
             pass
     
-    return result_list
+    return daily_values
 
 
 @app.route("/api/portfolio", methods=["POST"])

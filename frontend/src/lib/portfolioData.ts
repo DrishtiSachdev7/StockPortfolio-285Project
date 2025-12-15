@@ -322,29 +322,39 @@ function parsePlotlyTrend(
 		const trace = parsed?.data?.[0];
 		if (!trace?.x || !trace?.y) return null;
 
-		// Build trend with forward-fill for missing prices
-		const trend: { day: string; price: number }[] = [];
-		let lastValidPrice = 0;
+		// Build array of prices (may contain null/invalid values)
+		const prices = trace.y.map((p: any) =>
+			p != null && !isNaN(p) && p > 0 ? Number(p) : null
+		);
 
-		for (let idx = 0; idx < trace.x.length; idx++) {
-			const priceValue = trace.y[idx];
-			let price: number;
-
-			if (priceValue != null && !isNaN(priceValue) && priceValue > 0) {
-				price = priceValue;
-				lastValidPrice = price;
-			} else if (lastValidPrice > 0) {
-				// Use last valid price if current is null/invalid
-				price = lastValidPrice;
-			} else {
-				// Skip this point if we don't have any valid price yet
-				continue;
+		// Fill missing values: first try next day (back-fill), then previous day (forward-fill)
+		// Back-fill pass: use next available value
+		for (let i = prices.length - 2; i >= 0; i--) {
+			if (
+				prices[i] === null &&
+				i < prices.length - 1 &&
+				prices[i + 1] !== null
+			) {
+				prices[i] = prices[i + 1];
 			}
+		}
 
-			trend.push({
-				day: formatDayLabel(trace.x[idx]),
-				price: Math.round(price * 100) / 100,
-			});
+		// Forward-fill pass: use previous available value for any remaining null
+		for (let i = 1; i < prices.length; i++) {
+			if (prices[i] === null && prices[i - 1] !== null) {
+				prices[i] = prices[i - 1];
+			}
+		}
+
+		// Build final trend with valid prices
+		const trend: { day: string; price: number }[] = [];
+		for (let idx = 0; idx < trace.x.length; idx++) {
+			if (prices[idx] !== null) {
+				trend.push({
+					day: formatDayLabel(trace.x[idx]),
+					price: Math.round(prices[idx] * 100) / 100,
+				});
+			}
 		}
 
 		return trend.length > 0 ? trend : null;
@@ -366,29 +376,43 @@ function buildStockTrend(
 		stock.prices &&
 		stock.dates.length === stock.prices.length
 	) {
-		// Build trend with forward-fill for missing prices
-		const trend: { day: string; price: number }[] = [];
-		let lastValidPrice = fallbackPrice;
+		// Build array of prices (may contain null/invalid values)
+		const prices = stock.prices.map((p) =>
+			p != null && !isNaN(Number(p)) && Number(p) > 0 ? Number(p) : null
+		);
 
-		for (let idx = 0; idx < stock.dates.length; idx++) {
-			const priceValue = stock.prices?.[idx];
-			let price: number;
-
+		// Fill missing values: first try next day (back-fill), then previous day (forward-fill)
+		// Back-fill pass: use next available value
+		for (let i = prices.length - 2; i >= 0; i--) {
 			if (
-				priceValue != null &&
-				!isNaN(Number(priceValue)) &&
-				Number(priceValue) > 0
+				prices[i] === null &&
+				i < prices.length - 1 &&
+				prices[i + 1] !== null
 			) {
-				price = Number(priceValue);
-				lastValidPrice = price;
-			} else {
-				// Use last valid price if current is null/invalid
-				price = lastValidPrice;
+				prices[i] = prices[i + 1];
 			}
+		}
 
+		// Forward-fill pass: use previous available value for any remaining null
+		for (let i = 1; i < prices.length; i++) {
+			if (prices[i] === null && prices[i - 1] !== null) {
+				prices[i] = prices[i - 1];
+			}
+		}
+
+		// If still have nulls, use fallback
+		for (let i = 0; i < prices.length; i++) {
+			if (prices[i] === null) {
+				prices[i] = fallbackPrice;
+			}
+		}
+
+		// Build final trend
+		const trend: { day: string; price: number }[] = [];
+		for (let idx = 0; idx < stock.dates.length; idx++) {
 			trend.push({
 				day: formatDayLabel(stock.dates[idx]),
-				price: Math.round(price * 100) / 100,
+				price: Math.round(prices[idx]! * 100) / 100,
 			});
 		}
 
