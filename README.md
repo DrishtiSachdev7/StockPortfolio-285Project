@@ -33,6 +33,8 @@ Backend runs at: `http://localhost:5001`
 
 ```bash
 # From project root
+cd frontend
+
 npm install
 npm run dev
 ```
