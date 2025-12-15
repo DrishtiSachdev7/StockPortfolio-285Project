@@ -216,10 +216,15 @@ function parsePlotlyTrend(graphJson: string | null | undefined): { day: string; 
     const parsed = JSON.parse(graphJson);
     const trace = parsed?.data?.[0];
     if (!trace?.x || !trace?.y) return null;
-    return (trace.x as string[]).map((date: string, idx: number) => ({
-      day: formatDayLabel(date),
-      price: Number(trace.y[idx] ?? 0),
-    }));
+    // Filter out null/undefined prices to avoid Y-axis starting from 0
+    return (trace.x as string[])
+      .map((date: string, idx: number) => ({
+        day: formatDayLabel(date),
+        price: trace.y[idx],
+      }))
+      .filter((point): point is { day: string; price: number } => 
+        point.price != null && !isNaN(point.price) && point.price > 0
+      );
   } catch (error) {
     console.error("Failed to parse Plotly graph", error);
     return null;
@@ -231,10 +236,16 @@ function buildStockTrend(stock: BackendPortfolioStock, fallbackPrice: number): {
   if (fromPlotly && fromPlotly.length) return fromPlotly;
 
   if (stock.dates && stock.prices && stock.dates.length === stock.prices.length) {
-    return stock.dates.map((d, idx) => ({
-      day: formatDayLabel(d),
-      price: Number(stock.prices?.[idx] ?? fallbackPrice),
-    }));
+    // Filter out null/undefined prices to avoid Y-axis starting from 0
+    return stock.dates
+      .map((d, idx) => ({
+        day: formatDayLabel(d),
+        price: stock.prices?.[idx],
+      }))
+      .filter((point): point is { day: string; price: number } => 
+        point.price != null && !isNaN(Number(point.price)) && Number(point.price) > 0
+      )
+      .map((point) => ({ day: point.day, price: Number(point.price) }));
   }
 
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];

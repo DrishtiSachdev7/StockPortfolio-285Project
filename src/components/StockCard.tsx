@@ -1,6 +1,7 @@
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { ExternalLink } from "lucide-react";
+import { useMemo } from "react";
 
 interface StockCardProps {
   symbol: string;
@@ -25,6 +26,23 @@ const StockCard = ({
     ? weeklyTrend[weeklyTrend.length - 1].price - weeklyTrend[0].price 
     : 0;
   const isPositive = priceChange >= 0;
+
+  // Calculate dynamic Y-axis domain - filter out any zero/null values
+  const yAxisDomain = useMemo(() => {
+    const validPrices = weeklyTrend
+      .map((d) => d.price)
+      .filter((p) => p != null && !isNaN(p) && p > 0);
+    
+    if (validPrices.length === 0) return ['auto', 'auto'];
+    
+    const minPrice = Math.min(...validPrices);
+    const maxPrice = Math.max(...validPrices);
+    const range = maxPrice - minPrice;
+    
+    // Add 10% padding on each side for better visualization
+    const padding = Math.max(range * 0.1, minPrice * 0.005);
+    return [minPrice - padding, maxPrice + padding];
+  }, [weeklyTrend]);
 
   return (
     <div className="glass-card overflow-hidden fade-in-up">
@@ -90,14 +108,9 @@ const StockCard = ({
                 fontSize={10}
                 tickLine={false}
                 axisLine={{ stroke: "hsl(222, 30%, 16%)" }}
-                domain={["dataMin - 1", "dataMax + 1"]}
+                domain={yAxisDomain}
+                tickCount={5}
                 tickFormatter={(value) => `$${value.toFixed(0)}`}
-                label={{
-                  value: "Price (USD)",
-                  angle: -90,
-                  position: "insideLeft",
-                  style: { fontSize: 10, fill: "hsl(215, 20%, 55%)" },
-                }}
               />
               <Tooltip
                 contentStyle={{
