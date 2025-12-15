@@ -50,13 +50,20 @@ def fetch_weekly_trends_with_dates(stocks):
             dates = history.index.strftime("%Y-%m-%d").tolist()
             prices = list(history["Close"].values)
 
-            # Pad to 5 days if data is short
+            # Pad to 5 days if data is short - use first available price for missing days
+            first_price = prices[0] if prices else None
             while len(dates) < 5:
                 missing_date = (
                     datetime.strptime(dates[0], "%Y-%m-%d") - timedelta(days=1)
                 ).strftime("%Y-%m-%d")
                 dates.insert(0, missing_date)
-                prices.insert(0, None)
+                # Use the first available price instead of None
+                prices.insert(0, first_price)
+
+            # Fill any None values in the middle with previous available price
+            for i in range(1, len(prices)):
+                if prices[i] is None and i > 0:
+                    prices[i] = prices[i-1]
 
             trends[stock] = {"dates": dates[-5:], "prices": prices[-5:]}
         else:
@@ -104,13 +111,13 @@ def generate_plotly_graph(stock, trends):
 def get_investment_allocation(investment, strategies, split_equally):
     """Allocate investment across strategies."""
     if split_equally or len(strategies) == 1:
-        allocation_per_strategy = investment / len(strategies)
+        allocation_per_strategy = round(investment / len(strategies), 2)
         return {strategy: allocation_per_strategy for strategy in strategies}
 
     random_allocations = [random.random() for _ in strategies]
     total = sum(random_allocations)
     return {
-        strategies[i]: (random_allocations[i] / total) * investment
+        strategies[i]: round((random_allocations[i] / total) * investment, 2)
         for i in range(len(strategies))
     }
 
@@ -139,7 +146,7 @@ def calculate_portfolio_value(investment, stock_allocations, stock_prices):
     trends_with_dates = fetch_weekly_trends_with_dates(stock_allocations.keys())
 
     for stock, ratio in stock_allocations.items():
-        allocation = investment * ratio
+        allocation = round(investment * ratio, 2)
         price_info = stock_prices.get(stock, {})
         price = price_info.get("price")
 
@@ -149,35 +156,48 @@ def calculate_portfolio_value(investment, stock_allocations, stock_prices):
                 "price": None,
                 "shares": 0,
                 "graph": None,
-                "allocation_percentage": ratio,
+                "allocation_percentage": round(ratio, 2),
                 "dates": trends_with_dates[stock]["dates"],
                 "prices": trends_with_dates[stock]["prices"],
-                "change": price_info.get("change", 0),
+                "change": round(price_info.get("change", 0), 2),
             }
             continue
 
-        shares = allocation / price
+        shares = round(allocation / price, 2)
         trends = trends_with_dates[stock]
         graph_json = generate_plotly_graph(stock, trends)
+        stock_value = round(shares * price, 2)
 
         portfolio[stock] = {
             "allocation": allocation,
-            "allocation_percentage": ratio,
-            "price": price,
-            "shares": round(shares, 2),
+            "allocation_percentage": round(ratio, 2),
+            "price": round(price, 2),
+            "shares": shares,
             "graph": graph_json,
             "dates": trends["dates"],
             "prices": trends["prices"],
-            "change": price_info.get("change", 0),
+            "change": round(price_info.get("change", 0), 2),
         }
-        total_value += shares * price
+        total_value += stock_value
 
-    return portfolio, total_value
+    return portfolio, round(total_value, 2)
 
 
 def build_weekly_portfolio_trend(results):
     """Aggregate weekly trend across all stocks in all strategies."""
-    daily_values = []
+    # Collect all unique dates across all stocks
+    all_dates = set()
+    for result in results:
+        for stock_data in result["portfolio"].values():
+            dates = stock_data.get("dates") or []
+            all_dates.update(dates)
+    
+    # Sort dates chronologically
+    sorted_dates = sorted(all_dates)[-5:]  # Get last 5 days
+    
+    # Initialize daily values for each date
+    daily_values = {date: {"day": date, "value": 0.0} for date in sorted_dates}
+    
     for result in results:
         for stock_data in result["portfolio"].values():
             dates = stock_data.get("dates") or []
@@ -185,15 +205,31 @@ def build_weekly_portfolio_trend(results):
             shares = stock_data.get("shares", 0) or 0
 
             for idx, date in enumerate(dates):
-                if len(daily_values) <= idx:
-                    daily_values.append({"day": date, "value": 0.0})
-
+                if date not in daily_values:
+                    continue
                 price = prices[idx] if idx < len(prices) else None
                 if price is None:
                     continue
-                daily_values[idx]["value"] += shares * price
-                daily_values[idx]["day"] = date
-    return daily_values[:5]
+                daily_values[date]["value"] += shares * price
+    
+    # Convert to list and round values
+    result_list = [daily_values[date] for date in sorted_dates]
+    
+    # Forward-fill any missing values (0.0) with previous day's value
+    for i in range(len(result_list)):
+        if result_list[i]["value"] == 0.0 and i > 0:
+            result_list[i]["value"] = result_list[i-1]["value"]
+        else:
+            result_list[i]["value"] = round(result_list[i]["value"], 2)
+        
+        # Format date for display (e.g., "Dec 9")
+        try:
+            dt = datetime.strptime(result_list[i]["day"], "%Y-%m-%d")
+            result_list[i]["day"] = dt.strftime("%b %d")
+        except (ValueError, TypeError):
+            pass
+    
+    return result_list
 
 
 @app.route("/api/portfolio", methods=["POST"])
@@ -234,7 +270,7 @@ def portfolio():
             {
                 "strategy": strategy,
                 "portfolio": portfolio_data,
-                "total_value": strategy_total_value,
+                "total_value": round(strategy_total_value, 2),
             }
         )
         overall_total_value += strategy_total_value
@@ -244,7 +280,7 @@ def portfolio():
     return jsonify(
         {
             "results": results,
-            "overall_total_value": overall_total_value,
+            "overall_total_value": round(overall_total_value, 2),
             "weekly_trend": weekly_trend,
         }
     )
